@@ -1,0 +1,24 @@
+{
+  "name": "dts-parser",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "JSONSelect": "^0.4.0",
+    "coffee-script": "^1.7.1",
+    "json-query": "^0.4.0",
+    "node-inspector": "^0.7.3",
+    "optimist": "^0.6.1",
+    "prettyjson": "^1.0.0",
+    "typescript": "^1.0.1",
+    "typescript.api": "^0.7.7"
+  },
+  "devDependencies": {
+    "coffeeify": "^0.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
