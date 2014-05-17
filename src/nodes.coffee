@@ -5,6 +5,8 @@ TypeScript = require './typescript'
 
 mapClass = (Class, arr) -> arr.map (i) -> new Class(i)
 
+listToJSON = (list) -> list.map (i) -> i.toJSON()
+
 tokenKindToTypeKeyword = (tokenKind) ->
   for key, val of TypeScript.SyntaxKind
     if val is tokenKind then return key
@@ -47,7 +49,7 @@ class FunctionNode extends Node
     {
       annotationType: 'functionType'
       returnTypeName: returnTypeName
-      arguments: functionArgs.map (fa) -> fa.toJSON()
+      arguments: listToJSON functionArgs
     }
 
   arguments: (query) ->
@@ -189,7 +191,6 @@ class VariableNode extends Node
     if type.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
       return lambdaFunctionAnnotation.toJSON()
-      # p type
     else
       return {
         annotationType: 'varialbleType'
@@ -240,7 +241,7 @@ class ClassNode extends Node
 
   toJSON: ->
     className: @className()
-    properties: @getProperties().map (p) -> p.toJSON()
+    properties: listToJSON @getProperties()
 
 exports.InterfaceNode = InterfaceNode =
 class InterfaceNode extends Node
@@ -327,7 +328,7 @@ class InterfaceNode extends Node
 
   toJSON: ->
     interfaceName: @interfaceName()
-    properties: @properties().map (p) -> p.toJSON()
+    properties: listToJSON @properties()
 
 exports.Module = Module = class Module extends Node
 
@@ -383,10 +384,10 @@ exports.Module = Module = class Module extends Node
 
   toJSON: ->
     moduleName: @moduleName()
-    modules: @getModules().map (m) -> m.toJSON()
-    classes: @getClasses().map (c) -> c.toJSON()
-    properties: @getProperties().map (p) -> p.toJSON()
-    interfaces: @getInterfaces().map (i) -> i.toJSON()
+    modules   : listToJSON @getModules()
+    classes   : listToJSON @getClasses()
+    properties: listToJSON @getProperties()
+    interfaces: listToJSON @getInterfaces()
 
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
