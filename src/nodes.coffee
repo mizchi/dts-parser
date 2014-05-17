@@ -35,7 +35,7 @@ exports.FunctionNode = FunctionNode = class FunctionNode extends Node
 
   getType: ->
     args =  @arguments()
-    identifiers = mapClass Identifier, args
+    identifiers = mapClass FunctionArgument, args
     args = identifiers.map (ident) =>
       identifierName: ident.identifierName()
       typeAnnotation: ident.typeAnnotation()
@@ -66,7 +66,7 @@ exports.FunctionNode = FunctionNode = class FunctionNode extends Node
     propertyName: @propertyName()
     typeAnnotation: @getType()
 
-exports.Identifier = Identifier = class Identifier extends Node
+exports.FunctionArgument = FunctionArgument = class FunctionArgument extends Node
   '''
   Example: str:string
     _data:             0
@@ -93,17 +93,22 @@ exports.Identifier = Identifier = class Identifier extends Node
   typeAnnotation: ->
     tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
     typeName = tokenKindToTypeName(tokenKind)
-    if typeName is 'Identifier'
-      @$first(':root > .typeAnnotation > .type > ._fullText')
-    else
-      typeName
+    typeName =
+      if typeName is 'Identifier'
+        @$first(':root > .typeAnnotation > .type > ._fullText')
+      else
+        typeName
+    {
+      annotationType: 'functionArgumentType'
+      typeName: typeName
+    }
 
 exports.VariableNode = VariableNode = class VariableNode extends Node
   constructor: (@ast) ->
 
   propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
 
-  getType: ->
+  typeAnnotation: ->
     tokenKind = @$first(':root > .variableDeclarator > .typeAnnotation > .type > .tokenKind')
     typeName = tokenKindToTypeName(tokenKind)
     typeName =
@@ -112,13 +117,13 @@ exports.VariableNode = VariableNode = class VariableNode extends Node
       else
         typeName
     return {
-      nodeType: 'identifierType'
+      annotationType: 'varialbleType'
       typeName: typeName
     }
 
   toJSON: ->
     propertyName: @propertyName()
-    typeAnnotation: @getType()
+    typeAnnotation: @typeAnnotation()
 
 
 exports.Class = Class = class Class extends Node
@@ -161,7 +166,7 @@ class VariableDeclarationNode extends Node
       else
         typeName
     return {
-      nodeType: 'identifierType'
+      annotationType: 'variableDeclarationType'
       typeName: typeName
     }
 
