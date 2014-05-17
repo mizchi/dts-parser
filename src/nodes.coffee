@@ -29,21 +29,20 @@ exports.Node = Node = class Node
 
   $first: (query) -> @$(query)[0]
 
-
 class FunctionNode extends Node
   constructor: (@ast) ->
 
   propertyName: ->
-    @$first(':root > .identifier > ._fullText')
+    p @ast
+    @$first(':root > .propertyName > ._fullText')
 
-  getType: ->
+  typeAnnotation: ->
     args =  @arguments()
     identifiers = mapClass FunctionArgument, args
     args = identifiers.map (ident) =>
       identifierName: ident.identifierName()
       typeAnnotation: ident.typeAnnotation()
 
-    # return type
     returnTypeTokenKind = @$first(':root > .callSignature > .typeAnnotation > .type > .tokenKind')
     typeName = tokenKindToTypeName returnTypeTokenKind
     returnTypeName =
@@ -67,7 +66,74 @@ class FunctionNode extends Node
 
   toJSON: ->
     propertyName: @propertyName()
-    typeAnnotation: @getType()
+    typeAnnotation: @typeAnnotation()
+
+class LambdaFunctionAnnotation extends Node
+  '''
+  typeParameterList:      null
+  parameterList:
+    _data:           0
+    openParenToken:
+      tokenKind: 72
+    parameters:
+      item:
+        _data:             0
+        dotDotDotToken:    null
+        modifiers:
+
+        identifier:
+          _fullText: t
+          tokenKind: 11
+        questionToken:     null
+        typeAnnotation:
+          _data:      0
+          colonToken:
+            tokenKind: 106
+          type:
+            tokenKind: 67
+        equalsValueClause: null
+    closeParenToken:
+      _fullText:           )
+      tokenKind:           73
+      _trailingTriviaInfo: 4
+  equalsGreaterThanToken:
+    _fullText:           =>
+    tokenKind:           85
+    _trailingTriviaInfo: 4
+  type:
+    tokenKind: 67
+  '''
+  constructor: (@ast) ->
+
+  arguments: (query) ->
+    header = ":root > .parameterList > .parameters"
+    item = @$(header + '> .item')
+    if item.length > 0 then item
+    else
+      args = @$first(header+'> .elements')?.filter (i) -> i.identifier?
+      args ?= []
+
+  typeAnnotation: ->
+    args =  @arguments()
+    identifiers = mapClass FunctionArgument, args
+    args = identifiers.map (ident) =>
+      identifierName: ident.identifierName()
+      typeAnnotation: ident.typeAnnotation()
+
+    # return type
+    returnTypeTokenKind = @$first(':root > .type > .tokenKind')
+    typeName = tokenKindToTypeName returnTypeTokenKind
+    returnTypeName =
+      if typeName is 'Identifier'
+        @$first(':root > .type > ._fullText')
+      else
+        typeName
+    {
+      annotationType: 'lambdaFunctionType'
+      returnTypeName: returnTypeName
+      arguments: args
+    }
+  toJSON: -> @typeAnnotation()
 
 class FunctionArgument extends Node
   '''
@@ -108,6 +174,8 @@ class FunctionArgument extends Node
 
 class VariableNode extends Node
   constructor: (@ast) ->
+    # console.log '----'
+    # p @ast
 
   propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
 
@@ -119,10 +187,19 @@ class VariableNode extends Node
         @$first('.variableDeclarator > .typeAnnotation > .type > ._fullText')
       else
         typeName
-    return {
-      annotationType: 'varialbleType'
-      typeName: typeName
-    }
+
+    # labmda
+    type = @$first(':root > .variableDeclarator > .typeAnnotation > .type')
+    if type.parameterList?
+      console.log 'this is lambda'
+      lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
+      return lambdaFunctionAnnotation.toJSON()
+      # p type
+    else
+      return {
+        annotationType: 'varialbleType'
+        typeName: typeName
+      }
 
   toJSON: ->
     propertyName: @propertyName()
@@ -147,8 +224,6 @@ class VariableDeclarationNode extends Node
       annotationType: 'variableDeclarationType'
       typeName: typeName
     }
-
-
 
 class ClassNode extends Node
 

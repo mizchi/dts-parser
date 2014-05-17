@@ -1,5 +1,3 @@
 export interface IFoo {
-  a:any;
-  b:number;
-  f: (t:number) => number;
+  f: (t:number) => Object;
 }

@@ -1,6 +1,7 @@
 declare module Foo {
     export class Hoge {
-        f(str:string, n: number, obj: Object): number;
-        s: string;
+        s: any;
+        f1(str:string, n: number, obj: Object): number;
+        f2: (str:string, n: number, obj: Object) => number;
     }
 }
