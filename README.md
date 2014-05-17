@@ -6,8 +6,8 @@ TypeScript d.ts parser(wip)
 
 - [x] module
 - [x] classe
-- [x] string/number
-- [ ] interface
+- [x] string/number/boolean
+- [x] indentifierName
 - [ ] function
 - [ ] Generics
 
