@@ -204,7 +204,7 @@ class VariableNode extends Node
 class VariableDeclarationNode extends Node
   toJSON: ->
     {
-      propertyName: @$(':root > .propertyName > ._fullText')
+      propertyName: @$first(':root > .propertyName > ._fullText')
       typeAnnotation: @typeAnnotation()
     }
 
@@ -216,10 +216,17 @@ class VariableDeclarationNode extends Node
         @$first(':root > .typeAnnotation > .type > ._fullText')
       else
         typeName
-    return {
-      annotationType: 'variableDeclarationType'
-      typeName: typeName
-    }
+
+    # labmda
+    type = @$first(':root > .typeAnnotation > .type')
+    if type.parameterList?
+      lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
+      return lambdaFunctionAnnotation.toJSON()
+    else
+      return {
+        annotationType: 'variableDeclarationType'
+        typeName: typeName
+      }
 
 class ClassNode extends Node
 
@@ -324,6 +331,8 @@ class InterfaceNode extends Node
         props.push el
     else if typeMembers.item?
       props.push typeMembers.item
+    p props
+    # []
     mapClass VariableDeclarationNode, props
 
   toJSON: ->
