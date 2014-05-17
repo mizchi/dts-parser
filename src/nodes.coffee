@@ -20,6 +20,8 @@ tokenKindToTypeName = (tokenKind)->
     when 'VoidKeyword' then 'Void'
     when 'IdentifierName' then 'Identifier'
 
+isFunctionNode = (node) -> node.callSignature?
+
 exports.Node = Node = class Node
   constructor: (@ast) ->
 
@@ -27,7 +29,8 @@ exports.Node = Node = class Node
 
   $first: (query) -> @$(query)[0]
 
-exports.FunctionNode = FunctionNode = class FunctionNode extends Node
+
+class FunctionNode extends Node
   constructor: (@ast) ->
 
   propertyName: ->
@@ -66,7 +69,7 @@ exports.FunctionNode = FunctionNode = class FunctionNode extends Node
     propertyName: @propertyName()
     typeAnnotation: @getType()
 
-exports.FunctionArgument = FunctionArgument = class FunctionArgument extends Node
+class FunctionArgument extends Node
   '''
   Example: str:string
     _data:             0
@@ -103,7 +106,7 @@ exports.FunctionArgument = FunctionArgument = class FunctionArgument extends Nod
       typeName: typeName
     }
 
-exports.VariableNode = VariableNode = class VariableNode extends Node
+class VariableNode extends Node
   constructor: (@ast) ->
 
   propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
@@ -125,9 +128,29 @@ exports.VariableNode = VariableNode = class VariableNode extends Node
     propertyName: @propertyName()
     typeAnnotation: @typeAnnotation()
 
+class VariableDeclarationNode extends Node
+  toJSON: ->
+    {
+      propertyName: @$(':root > .propertyName > ._fullText')
+      typeAnnotation: @typeAnnotation()
+    }
 
-exports.Class = Class = class Class extends Node
-  isFunctionNode = (node) -> node.callSignature?
+  typeAnnotation: ->
+    tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
+    typeName = tokenKindToTypeName(tokenKind)
+    typeName =
+      if typeName is 'Identifier'
+        @$first(':root > .typeAnnotation > .type > ._fullText')
+      else
+        typeName
+    return {
+      annotationType: 'variableDeclarationType'
+      typeName: typeName
+    }
+
+
+
+class ClassNode extends Node
 
   constructor: (@ast) ->
 
@@ -149,26 +172,92 @@ exports.Class = Class = class Class extends Node
     className: @className()
     properties: @getProperties().map (p) -> p.toJSON()
 
-exports.VariableDeclarationNode = VariableDeclarationNode =
-class VariableDeclarationNode extends Node
-  toJSON: ->
-    {
-      propertyName: @$(':root > .propertyName > ._fullText')
-      typeAnnotation: @typeAnnotation()
-    }
+exports.InterfaceNode = InterfaceNode =
+class InterfaceNode extends Node
+  '''
+  _data:             0
+  modifiers:
+    item:
+      _fullText:           export
+      tokenKind:           47
+      _trailingTriviaInfo: 4
+  interfaceKeyword:
+    _fullText:           interface
+    tokenKind:           52
+    _trailingTriviaInfo: 4
+  identifier:
+    _fullText:           IFoo
+    tokenKind:           11
+    _trailingTriviaInfo: 4
+  typeParameterList: null
+  heritageClauses:
 
-  typeAnnotation: ->
-    tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
-    typeName = tokenKindToTypeName(tokenKind)
-    typeName =
-      if typeName is 'Identifier'
-        @$first(':root > .typeAnnotation > .type > ._fullText')
-      else
-        typeName
-    return {
-      annotationType: 'variableDeclarationType'
-      typeName: typeName
-    }
+  body:
+    _data:           0
+    openBraceToken:
+      _fullText:           {
+      tokenKind:           70
+      _trailingTriviaInfo: 5
+    typeMembers:
+      _data:     0
+      elements:
+        -
+          _data:          0
+          propertyName:
+            _fullText:          a
+            tokenKind:          11
+            _leadingTriviaInfo: 8
+          questionToken:  null
+          typeAnnotation:
+            _data:      0
+            colonToken:
+              tokenKind: 106
+            type:
+              tokenKind: 60
+        -
+          _fullText:           ;
+          tokenKind:           78
+          _trailingTriviaInfo: 5
+        -
+          _data:          0
+          propertyName:
+            _fullText:          b
+            tokenKind:          11
+            _leadingTriviaInfo: 8
+          questionToken:  null
+          typeAnnotation:
+            _data:      0
+            colonToken:
+              tokenKind: 106
+            type:
+              tokenKind: 67
+        -
+          _fullText:           ;
+          tokenKind:           78
+          _trailingTriviaInfo: 5
+    closeBraceToken:
+      _fullText:           }
+      tokenKind:           71
+      _trailingTriviaInfo: 5
+  '''
+
+  constructor: (@ast) ->
+
+  interfaceName: -> @$first(':root > .identifier > ._fullText')
+
+  properties: ->
+    typeMembers = @$first(':root > .body > .typeMembers')
+    props = []
+    if typeMembers.elements?
+      for el in typeMembers.elements when el.propertyName
+        props.push el
+    else if typeMembers.item?
+      props.push typeMembers.item
+    mapClass VariableDeclarationNode, props
+
+  toJSON: ->
+    interfaceName: @interfaceName()
+    properties: @properties().map (p) -> p.toJSON()
 
 exports.Module = Module = class Module extends Node
 
@@ -191,7 +280,13 @@ exports.Module = Module = class Module extends Node
     mods = @modules()
     mods = $(':root > *:has(.classKeyword)', mods)?.filter (c) -> c.classKeyword?
     mods ?= []
-    mapClass Class, mods
+    mapClass ClassNode, mods
+
+  getInterfaces: ->
+    mods = @modules()
+    mods = $(':root > *:has(.interfaceKeyword)', mods)?.filter (c) -> c.interfaceKeyword?
+    mods ?= []
+    mapClass InterfaceNode, mods
 
   getFunctions: ->
     mods = @modules()
@@ -221,6 +316,7 @@ exports.Module = Module = class Module extends Node
     modules: @getModules().map (m) -> m.toJSON()
     classes: @getClasses().map (c) -> c.toJSON()
     properties: @getProperties().map (p) -> p.toJSON()
+    interfaces: @getInterfaces().map (i) -> i.toJSON()
 
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
