@@ -34,6 +34,33 @@ exports.Node = Node = class Node
 
   $first: (query) -> @$(query)[0]
 
+  toJSON: -> throw 'Not implemented'
+
+class TypeParameter extends Node
+  '''
+    typeParameters:
+      item:
+        identifier:
+          _fullText: T
+          tokenKind: 11
+        constraint: null
+  '''
+  constructor: (@ast) ->
+
+  toJSON: ->
+    header = ":root > .typeParameters"
+    items = @$(header + '> .item')
+    items =
+      if items.length > 0 then items
+      else
+        items = @$first(header+'> .elements')?.filter (i) -> i.identifier?
+        items ?= []
+    items.map (i) ->
+      {
+        typeParameterName: i.identifier._fullText
+        constraint: i.constraint
+      }
+
 class FunctionNode extends Node
   constructor: (@ast) ->
 
@@ -250,7 +277,6 @@ class ClassNode extends Node
     className: @className()
     properties: listToJSON @getProperties()
 
-exports.InterfaceNode = InterfaceNode =
 class InterfaceNode extends Node
   '''
   _data:             0
@@ -331,13 +357,17 @@ class InterfaceNode extends Node
         props.push el
     else if typeMembers.item?
       props.push typeMembers.item
-    p props
     # []
     mapClass VariableDeclarationNode, props
 
   toJSON: ->
-    interfaceName: @interfaceName()
-    properties: listToJSON @properties()
+    if @ast.typeParameterList
+      typeParameter = new TypeParameter(@ast.typeParameterList)
+    {
+      interfaceName: @interfaceName()
+      properties: listToJSON @properties()
+      typeParameters: typeParameter?.toJSON()
+    }
 
 exports.Module = Module = class Module extends Node
 
@@ -401,4 +431,4 @@ exports.Module = Module = class Module extends Node
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
   constructor: (@ast) ->
-    # p @ast
+    p @ast

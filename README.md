@@ -7,8 +7,11 @@ TypeScript d.ts parser(wip)
 - [x] module
 - [x] nested module
 - [x] class
+- [ ] extends
+- [ ] implement
 - [x] variable declaration
 - [x] string/number/boolean/any/lambda
+- [ ] nullable
 - [x] function
 - [x] interface
 - [ ] generics
