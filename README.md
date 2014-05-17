@@ -62,13 +62,8 @@ modules:
 from code
 
 ```coffee
-fs = require 'fs'
-Parser = require './parser'
-{Root} = require './nodes'
-
-source = fs.readFileSync('dummy.d.ts').toString()
-parser = new Parser
-ast = parser.parse(source)
-root = new Root ast._sourceUnit
-console.log root.toJSON()
+parser = require 'dts-parser'
+console.log parser.parse('dummy.d.ts')
 ```
+
+API will be changed soon
