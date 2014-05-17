@@ -5,11 +5,13 @@ TypeScript d.ts parser(wip)
 ## Features
 
 - [x] module
-- [x] classe
-- [x] string/number/boolean
-- [x] indentifierName
-- [ ] function
-- [ ] Generics
+- [x] nested module
+- [x] class
+- [x] variable declaration
+- [x] string/number/boolean/any
+- [x] function
+- [ ] interface
+- [ ] generics
 
 ## Examples
 
@@ -17,14 +19,18 @@ examples/dummy.d.ts
 
 ```typescript
 declare module Foo {
-    export class Hoge {
-        name: string;
-        n: number;
-        bool: boolean;
-        obj: Object;
-        arr: Array;
+    export function fun(str: string):void;
+    export function funfun(str: string):void;
+    export var a:number, b: Object;
+    export var c: Object;
+    export class Bar {
+        f():string;
+        x: any;
     }
 }
+
+export class X {}
+export var x: any;
 ```
 
 Exec
@@ -32,31 +38,76 @@ Exec
 ```
 $ npm install
 $ ./bin/dts-parser examples/dummy.d.ts
+moduleName: Top
 modules:
   -
-    name:    Foo
-    type:    module
+    moduleName: Foo
     modules:
       (empty array)
     classes:
       -
-        className:  Hoge
+        className:  Bar
         properties:
           -
-            propertyName: name
-            typeName:     String
+            typeAnnotation:
+              annotationType: functionType
+              returnTypeName: String
+              arguments:
+                (empty array)
           -
-            propertyName: n
-            typeName:     Number
-          -
-            propertyName: bool
-            typeName:     Boolean
-          -
-            propertyName: obj
-            typeName:     Object
-          -
-            propertyName: arr
-            typeName:     Array
+            propertyName:   x
+            typeAnnotation:
+              nodeType: identifierType
+              typeName: Any
+    properties:
+      -
+        propertyName:   fun
+        typeAnnotation:
+          annotationType: functionType
+          returnTypeName: Void
+          arguments:
+            -
+              identifierName: str
+              typeAnnotation: String
+      -
+        propertyName:   funfun
+        typeAnnotation:
+          annotationType: functionType
+          returnTypeName: Void
+          arguments:
+            -
+              identifierName: str
+              typeAnnotation: String
+      -
+        propertyName:
+          - a
+        typeAnnotation:
+          nodeType: identifierType
+          typeName: Number
+      -
+        propertyName:
+          - b
+        typeAnnotation:
+          nodeType: identifierType
+          typeName: Object
+      -
+        propertyName:
+          - c
+        typeAnnotation:
+          nodeType: identifierType
+          typeName: Object
+classes:
+  -
+    className:  X
+    properties:
+      (empty array)
+properties:
+  -
+    propertyName:
+      - x
+    typeAnnotation:
+      nodeType: identifierType
+      typeName: Any
 ```
 
 from code
