@@ -19,6 +19,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "dts-parser": "./bin/dts-parser"
+  },
   "author": "",
-  "license": "ISC"
+  "license": "MIT"
 }
