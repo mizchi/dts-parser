@@ -215,7 +215,7 @@ class VariableNode extends Node
 
     # labmda
     type = @$first(':root > .variableDeclarator > .typeAnnotation > .type')
-    if type.parameterList?
+    if type?.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
       return lambdaFunctionAnnotation.toJSON()
     else
@@ -230,6 +230,7 @@ class VariableNode extends Node
 
 class VariableDeclarationNode extends Node
   toJSON: ->
+    # p @ast
     {
       propertyName: @$first(':root > .propertyName > ._fullText')
       typeAnnotation: @typeAnnotation()
@@ -246,9 +247,14 @@ class VariableDeclarationNode extends Node
 
     # labmda
     type = @$first(':root > .typeAnnotation > .type')
-    if type.parameterList?
+    if type?.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
       return lambdaFunctionAnnotation.toJSON()
+    # else if @ast.callSignature
+    #   # p @ast
+    #   fn = new FunctionNode @ast
+    #   fn.toJSON()
+    #   # {}
     else
       return {
         annotationType: 'variableDeclarationType'
@@ -274,8 +280,11 @@ class ClassNode extends Node
   className: -> @$(':root > .identifier > ._fullText')?[0]
 
   toJSON: ->
-    className: @className()
-    properties: listToJSON @getProperties()
+    {
+      className: @className()
+      properties: listToJSON @getProperties()
+      typeParameters: if @ast.typeParameterList? then new TypeParameter(@ast.typeParameterList).toJSON() else null
+    }
 
 class InterfaceNode extends Node
   '''
@@ -357,16 +366,18 @@ class InterfaceNode extends Node
         props.push el
     else if typeMembers.item?
       props.push typeMembers.item
-    # []
-    mapClass VariableDeclarationNode, props
+
+    props.map (i) =>
+      if isFunctionNode(i)
+        new FunctionNode(i)
+      else
+        new VariableDeclarationNode(i)
 
   toJSON: ->
-    if @ast.typeParameterList
-      typeParameter = new TypeParameter(@ast.typeParameterList)
     {
       interfaceName: @interfaceName()
       properties: listToJSON @properties()
-      typeParameters: typeParameter?.toJSON()
+      typeParameters: if @ast.typeParameterList? then new TypeParameter(@ast.typeParameterList).toJSON() else null
     }
 
 exports.Module = Module = class Module extends Node
@@ -409,7 +420,7 @@ exports.Module = Module = class Module extends Node
     mods = $(':root > *:has(:root .variableDeclaration)', mods)?.filter (v) -> v.variableDeclaration?
 
     items = []
-    mods = mods.map (m) ->
+    mods.forEach (m) ->
       if elements = m.variableDeclaration.variableDeclarators.elements
         for el in elements when el.propertyName
           items.push el
@@ -431,4 +442,4 @@ exports.Module = Module = class Module extends Node
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
   constructor: (@ast) ->
-    p @ast
+    # p @ast
