@@ -16,6 +16,8 @@ tokenKindToTypeName = (tokenKind)->
     when 'StringKeyword' then 'String'
     when 'NumberKeyword' then 'Number'
     when 'BooleanKeyword' then 'Boolean'
+    when 'AnyKeyword' then 'Any'
+    when 'VoidKeyword' then 'Void'
     when 'IdentifierName' then 'Identifier'
 
 exports.Node = Node = class Node
@@ -25,16 +27,11 @@ exports.Node = Node = class Node
 
   $first: (query) -> @$(query)[0]
 
-  _modules: ->
-    item = @$(":root > .moduleElements > .item")
-    if item.length > 0 then item
-    else @$first(":root > .moduleElements > .nodeOrTokens")
-
-
-exports.Function = Function = class Function extends Node
+exports.FunctionNode = FunctionNode = class FunctionNode extends Node
   constructor: (@ast) ->
 
-  propertyName: -> @$first(':root > .propertyName > ._fullText')
+  propertyName: ->
+    @$first(':root > .identifier > ._fullText')
 
   getType: ->
     args =  @arguments()
@@ -52,7 +49,7 @@ exports.Function = Function = class Function extends Node
       else
         typeName
     {
-      nodeType: 'functionType'
+      annotationType: 'functionType'
       returnTypeName: returnTypeName
       arguments: args
     }
@@ -61,7 +58,13 @@ exports.Function = Function = class Function extends Node
     header = ":root > .callSignature > .parameterList > .parameters"
     item = @$(header + '> .item')
     if item.length > 0 then item
-    else @$first(header+'> .elements').filter (i) -> i.identifier?
+    else
+      args = @$first(header+'> .elements')?.filter (i) -> i.identifier?
+      args ?= []
+
+  toJSON: ->
+    propertyName: @propertyName()
+    typeAnnotation: @getType()
 
 exports.Identifier = Identifier = class Identifier extends Node
   '''
@@ -82,77 +85,53 @@ exports.Identifier = Identifier = class Identifier extends Node
         tokenKind: 69
     equalsValueClause: null
   '''
+
   constructor: (@ast) ->
 
   identifierName: -> @$first(':root > .identifier > ._fullText')
 
   typeAnnotation: ->
     tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
-    console.log tokenKind
-    # typeName = Type.tokenKindToTypeName(tokenKind)
     typeName = tokenKindToTypeName(tokenKind)
     if typeName is 'Identifier'
       @$first(':root > .typeAnnotation > .type > ._fullText')
     else
       typeName
 
-exports.Property = Property = class Property extends Node
+exports.VariableNode = VariableNode = class VariableNode extends Node
   constructor: (@ast) ->
 
-  propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText') ? @$first(':root > .propertyName > ._fullText')
-
-  isFunction: -> !!@$first(':root .callSignature')
-
-  arguments: (query) ->
-    header = ":root > .callSignature > .parameterList > .parameters"
-    item = @$(header + '> .item')
-    if item.length > 0 then item
-    else @$first(header+'> .elements').filter (i) -> i.identifier?
+  propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
 
   getType: ->
-    if @isFunction()
-      args =  @arguments()
-      identifiers = mapClass Identifier, args
-      args = identifiers.map (ident) =>
-        identifierName: ident.identifierName()
-        typeAnnotation: ident.typeAnnotation()
-
-      # return type
-      returnTypeTokenKind = @$first(':root > .callSignature > .typeAnnotation > .type > .tokenKind')
-      typeName = tokenKindToTypeName returnTypeTokenKind
-      returnTypeName =
-        if typeName is 'Identifier'
-          @$first(':root > .typeAnnotation > .type > ._fullText')
-        else
-          typeName
-      return {
-        nodeType: 'functionType'
-        returnTypeName: returnTypeName
-        arguments: args
-      }
-
-    else
-      tokenKind = @$first(':root > .variableDeclarator > .typeAnnotation > .type > .tokenKind')
-      typeName = tokenKindToTypeName(tokenKind)
-      typeName =
-        if typeName is 'Identifier'
-          @$first('.variableDeclarator > .typeAnnotation > .type > ._fullText')
-        else
-          typeName
-      return {
-        nodeType: 'identifierType'
-        typeName: typeName
-      }
+    tokenKind = @$first(':root > .variableDeclarator > .typeAnnotation > .type > .tokenKind')
+    typeName = tokenKindToTypeName(tokenKind)
+    typeName =
+      if typeName is 'Identifier'
+        @$first('.variableDeclarator > .typeAnnotation > .type > ._fullText')
+      else
+        typeName
+    return {
+      nodeType: 'identifierType'
+      typeName: typeName
+    }
 
   toJSON: ->
     propertyName: @propertyName()
     typeAnnotation: @getType()
 
+
 exports.Class = Class = class Class extends Node
+  isFunctionNode = (node) -> node.callSignature?
+
   constructor: (@ast) ->
 
   getProperties: ->
-    mapClass Property, @_classElements()
+    for el in @_classElements()
+      if isFunctionNode(el)
+        new FunctionNode(el)
+      else
+        new VariableNode(el)
 
   _classElements: ->
     item = @$(":root > .classElements > .item")
@@ -165,32 +144,80 @@ exports.Class = Class = class Class extends Node
     className: @className()
     properties: @getProperties().map (p) -> p.toJSON()
 
+exports.VariableDeclarationNode = VariableDeclarationNode =
+class VariableDeclarationNode extends Node
+  toJSON: ->
+    {
+      propertyName: @$(':root > .propertyName > ._fullText')
+      typeAnnotation: @typeAnnotation()
+    }
+
+  typeAnnotation: ->
+    tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
+    typeName = tokenKindToTypeName(tokenKind)
+    typeName =
+      if typeName is 'Identifier'
+        @$first(':root > .typeAnnotation > .type > ._fullText')
+      else
+        typeName
+    return {
+      nodeType: 'identifierType'
+      typeName: typeName
+    }
+
 exports.Module = Module = class Module extends Node
 
   constructor: (@ast) ->
 
   moduleName: -> @$first(':root > .item > .name > ._fullText') or @$first(':root .name > ._fullText')
 
+  modules: ->
+    item = @$(":root > .moduleElements > .item")
+    if item.length > 0 then item
+    else @$first(":root > .moduleElements > .nodeOrTokens")
+
   getModules: ->
-    mods = @_modules()
-    mods = $(':root > *:has(.moduleKeyword)', mods)
+    mods = @modules()
+    mods = $(':root > *:has(.moduleKeyword)', mods)?.filter (m) -> m.moduleKeyword?
+    mods ?= []
     mapClass Module, mods
 
   getClasses: ->
-    mods = @_modules()
-    mods = $(':root > *:has(.classKeyword)', mods)
+    mods = @modules()
+    mods = $(':root > *:has(.classKeyword)', mods)?.filter (c) -> c.classKeyword?
+    mods ?= []
     mapClass Class, mods
 
   getFunctions: ->
-    mods = @_modules()
-    mods = $(':root > *:has(.functionKeyword)', mods)
-    mapClass Class, mods
+    mods = @modules()
+    mods = $(':root > *:has(.functionKeyword)', mods)?.filter (f) -> f.functionKeyword?
+    mods ?= []
+    mapClass FunctionNode, mods
+
+  getVariables: ->
+    mods = @modules()
+    mods = $(':root > *:has(:root .variableDeclaration)', mods)?.filter (v) -> v.variableDeclaration?
+
+    items = []
+    mods = mods.map (m) ->
+      if elements = m.variableDeclaration.variableDeclarators.elements
+        for el in elements when el.propertyName
+          items.push el
+      else if item = m.variableDeclaration.variableDeclarators.item
+        items.push item
+    mapClass VariableDeclarationNode, items
+
+  getProperties: ->
+    props = []
+    [].concat(@getFunctions(), @getVariables())
 
   toJSON: ->
     moduleName: @moduleName()
     modules: @getModules().map (m) -> m.toJSON()
     classes: @getClasses().map (c) -> c.toJSON()
-    functions: @getFunctions()
+    properties: @getProperties().map (p) -> p.toJSON()
 
-exports.Root = Root = class Root extends Module
+exports.TopModule = TopModule = class TopModule extends Module
+  moduleName: -> 'Top'
   constructor: (@ast) ->
+    # p @ast
