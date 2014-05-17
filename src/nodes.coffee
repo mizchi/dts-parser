@@ -30,20 +30,38 @@ exports.Node = Node = class Node
     if item.length > 0 then item
     else @$first(":root > .moduleElements > .nodeOrTokens")
 
-  getModules: ->
-    mods = @_modules()
-    mods = $(':root > *:has(.moduleKeyword)', mods)
-    mapClass Module, mods
 
-  getClasses: ->
-    mods = @_modules()
-    mods = $(':root > *:has(.classKeyword)', mods)
-    mapClass Class, mods
+exports.Function = Function = class Function extends Node
+  constructor: (@ast) ->
 
-  getFunctions: ->
-    mods = @_modules()
-    mods = $(':root > *:has(.functionKeyword)', mods)
-    mapClass Class, mods
+  propertyName: -> @$first(':root > .propertyName > ._fullText')
+
+  getType: ->
+    args =  @arguments()
+    identifiers = mapClass Identifier, args
+    args = identifiers.map (ident) =>
+      identifierName: ident.identifierName()
+      typeAnnotation: ident.typeAnnotation()
+
+    # return type
+    returnTypeTokenKind = @$first(':root > .callSignature > .typeAnnotation > .type > .tokenKind')
+    typeName = tokenKindToTypeName returnTypeTokenKind
+    returnTypeName =
+      if typeName is 'Identifier'
+        @$first(':root > .typeAnnotation > .type > ._fullText')
+      else
+        typeName
+    {
+      nodeType: 'functionType'
+      returnTypeName: returnTypeName
+      arguments: args
+    }
+
+  arguments: (query) ->
+    header = ":root > .callSignature > .parameterList > .parameters"
+    item = @$(header + '> .item')
+    if item.length > 0 then item
+    else @$first(header+'> .elements').filter (i) -> i.identifier?
 
 exports.Identifier = Identifier = class Identifier extends Node
   '''
@@ -114,23 +132,17 @@ exports.Property = Property = class Property extends Node
       }
 
     else
+      tokenKind = @$first(':root > .variableDeclarator > .typeAnnotation > .type > .tokenKind')
+      typeName = tokenKindToTypeName(tokenKind)
       typeName =
-        switch @_typeKeywordName()
-          when 'StringKeyword' then 'String'
-          when 'NumberKeyword' then 'Number'
-          when 'BooleanKeyword' then 'Boolean'
-          when 'IdentifierName' then @$first('.variableDeclarator > .typeAnnotation > .type > ._fullText')
+        if typeName is 'Identifier'
+          @$first('.variableDeclarator > .typeAnnotation > .type > ._fullText')
+        else
+          typeName
       return {
         nodeType: 'identifierType'
         typeName: typeName
       }
-
-  _typeKeywordName: ->
-    for key, val of TypeScript.SyntaxKind
-      if val is @_typeTokenKind() then return key
-    ''
-
-  _typeTokenKind: -> @$first(':root > .variableDeclarator > .typeAnnotation > .type > .tokenKind')
 
   toJSON: ->
     propertyName: @propertyName()
@@ -159,17 +171,26 @@ exports.Module = Module = class Module extends Node
 
   moduleName: -> @$first(':root > .item > .name > ._fullText') or @$first(':root .name > ._fullText')
 
+  getModules: ->
+    mods = @_modules()
+    mods = $(':root > *:has(.moduleKeyword)', mods)
+    mapClass Module, mods
+
+  getClasses: ->
+    mods = @_modules()
+    mods = $(':root > *:has(.classKeyword)', mods)
+    mapClass Class, mods
+
+  getFunctions: ->
+    mods = @_modules()
+    mods = $(':root > *:has(.functionKeyword)', mods)
+    mapClass Class, mods
+
   toJSON: ->
-    name: @moduleName()
-    type: 'module'
+    moduleName: @moduleName()
     modules: @getModules().map (m) -> m.toJSON()
     classes: @getClasses().map (c) -> c.toJSON()
     functions: @getFunctions()
 
-exports.Root = Root = class Root extends Node
+exports.Root = Root = class Root extends Module
   constructor: (@ast) ->
-  toJSON: ->
-    modules: do =>
-      modules = @getModules()
-      for m in @getModules()
-        m.toJSON()
