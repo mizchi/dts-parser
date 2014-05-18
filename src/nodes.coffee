@@ -150,23 +150,18 @@ class FunctionNode extends Node
     @$first(':root > .propertyName > ._fullText')
 
   typeAnnotation: ->
-    args =  @arguments()
+    args =  @_arguments()
     functionArgs = mapClass FunctionArgument, args
-    # returnTypeName = typeToTypeName @$first(':root > .callSignature > .typeAnnotation > .type')
-
     type = @$first(':root > .callSignature > .typeAnnotation > .type')
     returnType = new AnnotatedType type
-    # console.log '--a----'
-    # p at.toJSON()
 
     {
       annotationType: 'functionType'
-      # returnTypeName: returnTypeName
       returnType: returnType.toJSON()
       arguments: listToJSON functionArgs
     }
 
-  arguments: (query) ->
+  _arguments: (query) ->
     header = ":root > .callSignature > .parameterList > .parameters"
     item = @$(header + '> .item')
     if item.length > 0 then item
@@ -226,27 +221,21 @@ class LambdaFunctionAnnotation extends Node
       args = @$first(header+'> .elements')?.filter (i) -> i.identifier?
       args ?= []
 
-  typeAnnotation: ->
+  _arguments: ->
     args =  @arguments()
     identifiers = mapClass FunctionArgument, args
     args = identifiers.map (ident) =>
       identifierName: ident.identifierName()
       typeAnnotation: ident.typeAnnotation()
 
-    # return type
-    returnTypeTokenKind = @$first(':root > .type > .tokenKind')
-    typeName = tokenKindToTypeName returnTypeTokenKind
-    returnTypeName =
-      if typeName is 'Identifier'
-        @$first(':root > .type > ._fullText')
-      else
-        typeName
-    {
-      annotationType: 'lambdaFunctionType'
-      returnTypeName: returnTypeName
-      arguments: args
-    }
-  toJSON: -> @typeAnnotation()
+  typeAnnotation: ->
+    returnTypeAnnotation = new AnnotatedType @$first(':root > .type')
+    returnTypeAnnotation.toJSON()
+
+  toJSON: ->
+    annotationType: 'lambdaFunctionType'
+    typeAnnotation: @typeAnnotation()
+    arguments: @_arguments()
 
 class FunctionArgument extends Node
   '''
@@ -285,15 +274,6 @@ class VariableNode extends Node
   propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
 
   typeAnnotation: ->
-    # tokenKind = @$first(':root > .variableDeclarator > .typeAnnotation > .type > .tokenKind')
-    # typeName = tokenKindToTypeName(tokenKind)
-    # typeName =
-    #   if typeName is 'Identifier'
-    #     @$first('.variableDeclarator > .typeAnnotation > .type > ._fullText')
-    #   else
-    #     typeName
-
-    # labmda
     type = @$first(':root > .variableDeclarator > .typeAnnotation > .type')
     if type?.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
@@ -301,10 +281,6 @@ class VariableNode extends Node
     else
       type = new AnnotatedType @$first(':root > .variableDeclarator > .typeAnnotation > .type')
       return type.toJSON()
-      # return {
-      #   annotationType: 'varialbleType'
-      #   typeName: typeName
-      # }
 
   toJSON: ->
     propertyName: @propertyName()
@@ -318,29 +294,26 @@ class VariableDeclarationNode extends Node
     }
 
   typeAnnotation: ->
-    tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
-    typeName = tokenKindToTypeName(tokenKind)
-    typeName =
-      if typeName is 'Identifier'
-        @$first(':root > .typeAnnotation > .type > ._fullText')
-      else
-        typeName
+    # tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
+    # typeName = tokenKindToTypeName(tokenKind)
+    # typeName =
+    #   if typeName is 'Identifier'
+    #     @$first(':root > .typeAnnotation > .type > ._fullText')
+    #   else
+    #     typeName
 
     # labmda
     type = @$first(':root > .typeAnnotation > .type')
     if type?.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
       return lambdaFunctionAnnotation.toJSON()
-    # else if @ast.callSignature
-    #   # p @ast
-    #   fn = new FunctionNode @ast
-    #   fn.toJSON()
-    #   # {}
     else
-      return {
-        annotationType: 'variableDeclarationType'
-        typeName: typeName
-      }
+      type = new AnnotatedType @$first(':root > .typeAnnotation > .type')
+      type.toJSON()
+      # return {
+      #   annotationType: 'variableDeclarationType'
+      #   typeName: typeName
+      # }
 
 class ClassNode extends Node
 
