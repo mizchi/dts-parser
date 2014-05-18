@@ -22,6 +22,16 @@ tokenKindToTypeName = (tokenKind)->
     when 'VoidKeyword' then 'Void'
     when 'IdentifierName' then 'Identifier'
 
+itemOrElements = (node) ->
+  if node.item then [node.item]
+  else if node.elements then node.elements
+  else []
+
+itemOrNodeOrTokens = (node) ->
+  if node.item then [node.item]
+  else if node.nodeOrTokens then node.nodeOrTokens
+  else []
+
 typeToTypeName = (type) ->
   type._fullText ? tokenKindToTypeName type.tokenKind
 
@@ -305,6 +315,55 @@ class VariableDeclarationNode extends Node
       type = new AnnotatedType @$first(':root > .typeAnnotation > .type')
       type.toJSON()
 
+class HeritageList extends Node
+  '''
+    nodeOrTokens:
+      -
+        extendsOrImplementsKeyword:
+          _fullText:           extends
+        typeNames:
+          item:
+            _fullText:           A
+      -
+        extendsOrImplementsKeyword:
+          _fullText:           implements
+        typeNames:
+          elements:
+            -
+              _fullText: IF1
+              tokenKind: 11
+            -
+              _fullText:           ,
+              tokenKind:           79
+            -
+              _fullText:           IF2
+              tokenKind:           11
+  '''
+  root: 'heritageClauses'
+  constructor: (@ast) ->
+    # p @ast
+  toJSON: ->
+    items = itemOrNodeOrTokens @ast
+    implementList = null
+    extend = null
+
+    items.forEach (item) =>
+      heritageType = item.extendsOrImplementsKeyword._fullText
+      types = itemOrElements(item.typeNames)
+        .filter (i) -> i._fullText isnt ','
+        .map (i) -> new AnnotatedType(i)
+      switch heritageType
+        when 'implements'
+          if types.length > 0
+            implementList = listToJSON types
+        when 'extends'
+          if types.length > 0
+            extend = types[0].toJSON()
+    {
+      implementList: implementList
+      extend: extend
+    }
+
 class ClassNode extends Node
 
   constructor: (@ast) ->
@@ -328,6 +387,7 @@ class ClassNode extends Node
       className: @className()
       properties: listToJSON @getProperties()
       typeParameters: if @ast.typeParameterList? then new TypeParameter(@ast.typeParameterList).toJSON() else null
+      heritages: if @ast.heritageClauses then new HeritageList(@ast.heritageClauses).toJSON() else null
     }
 
 class InterfaceNode extends Node
@@ -422,6 +482,7 @@ class InterfaceNode extends Node
       interfaceName: @interfaceName()
       properties: listToJSON @properties()
       typeParameters: if @ast.typeParameterList? then new TypeParameter(@ast.typeParameterList).toJSON() else null
+      heritages: if @ast.heritageClauses then new HeritageList(@ast.heritageClauses).toJSON() else null
     }
 
 exports.Module = Module = class Module extends Node
@@ -486,4 +547,4 @@ exports.Module = Module = class Module extends Node
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
   constructor: (@ast) ->
-    p @ast
+    # p @ast

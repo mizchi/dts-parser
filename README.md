@@ -14,11 +14,11 @@ TypeScript d.ts parser(wip)
 - ✔ generics in class
 - ✔ generics in interface
 - ✔ generics in function
-- ✔ List like T[]
-- class - extends
-- class - implement
-- interface - implement
-- nullable?
+- ✔ T[]
+- ✔ nullable?
+- ✔ class - extends
+- ✔ class - implement
+- ✔ interface - extends
 
 ## Examples
 
