@@ -55,7 +55,7 @@ class AnnotatedType extends Node
   '''
 
   typeName: ->
-    fullText = @$first(':root ._fullText') ? @$(':root > .name > ._fullText')
+    fullText = @$first(':root ._fullText') ? @$first(':root > .name > ._fullText')
     return fullText if fullText?
     tokenKindToTypeName (@$first(':root > .tokenKind') ? @$first(':root .name > .tokenKind'))
 
@@ -225,9 +225,7 @@ class LambdaFunctionAnnotation extends Node
   _arguments: ->
     args =  @arguments()
     identifiers = mapClass FunctionArgument, args
-    args = identifiers.map (ident) =>
-      identifierName: ident.identifierName()
-      typeAnnotation: ident.typeAnnotation()
+    args = identifiers.map (ident) => ident.toJSON()
 
   typeAnnotation: ->
     returnTypeAnnotation = new AnnotatedType @$first(':root > .type')
@@ -261,6 +259,8 @@ class FunctionArgument extends Node
 
   identifierName: -> @$first(':root > .identifier > ._fullText')
 
+  nullable: -> !!@ast.questionToken
+
   typeAnnotation: ->
     type = new AnnotatedType @$first(':root > .typeAnnotation > .type')
     type.toJSON()
@@ -268,6 +268,7 @@ class FunctionArgument extends Node
   toJSON: ->
     identifierName: @identifierName()
     typeAnnotation: @typeAnnotation()
+    nullable: @nullable()
 
 class VariableNode extends Node
   constructor: (@ast) ->
