@@ -24,7 +24,14 @@ See output detail in `lib.d.ts.parsed`.
 - ✔ class - implement
 - ✔ interface - extends
 
+## Install
+
+```
+npm install dts-parser -g
+```
+
 ## Examples
+
 
 examples/dummy.d.ts
 
