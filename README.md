@@ -4,19 +4,21 @@ TypeScript d.ts parser(wip)
 
 ## Features
 
-- [x] module
-- [x] nested module
-- [x] class
-- [ ] extends
-- [ ] implement
-- [x] variable declaration
-- [x] string/number/boolean/any/lambda
-- [ ] nullable?
-- [x] function
-- [x] interface
-- [x] generics declaration in class, interface, function
-- [ ] generics application
-- [ ] List like T[]
+- ✔ module
+- ✔ nested module
+- ✔ class
+- ✔ variable declaration
+- ✔ string/number/boolean/any/lambda
+- ✔ function
+- ✔ interface
+- ✔ generics in class
+- ✔ generics in interface
+- ✔ generics in function
+- ✔ List like T[]
+- class - extends
+- class - implement
+- interface - implement
+- nullable?
 
 ## Examples
 

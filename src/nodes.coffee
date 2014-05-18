@@ -61,6 +61,8 @@ class AnnotatedType extends Node
 
   constructor: (@ast) ->
 
+  isArray: -> @ast.openBracketToken? and @ast.closeBracketToken?
+
   typeArguments: ->
     header = ":root > .typeArgumentList > .typeArguments"
     items = @$(header + '> .item')
@@ -91,6 +93,7 @@ class AnnotatedType extends Node
     {
       typeName: @typeName()
       typeArguments: @typeArguments()
+      isArray: @isArray()
     }
 
 class TypeParameter extends Node
@@ -152,9 +155,7 @@ class FunctionNode extends Node
   typeAnnotation: ->
     args =  @_arguments()
     functionArgs = mapClass FunctionArgument, args
-    type = @$first(':root > .callSignature > .typeAnnotation > .type')
-    returnType = new AnnotatedType type
-
+    returnType = new AnnotatedType @$first(':root > .callSignature > .typeAnnotation > .type')
     {
       annotationType: 'functionType'
       returnType: returnType.toJSON()
@@ -274,6 +275,7 @@ class VariableNode extends Node
   propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
 
   typeAnnotation: ->
+    # TODO: refactor
     type = @$first(':root > .variableDeclarator > .typeAnnotation > .type')
     if type?.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
@@ -294,15 +296,6 @@ class VariableDeclarationNode extends Node
     }
 
   typeAnnotation: ->
-    # tokenKind = @$first(':root > .typeAnnotation > .type > .tokenKind')
-    # typeName = tokenKindToTypeName(tokenKind)
-    # typeName =
-    #   if typeName is 'Identifier'
-    #     @$first(':root > .typeAnnotation > .type > ._fullText')
-    #   else
-    #     typeName
-
-    # labmda
     type = @$first(':root > .typeAnnotation > .type')
     if type?.parameterList?
       lambdaFunctionAnnotation = new LambdaFunctionAnnotation(type)
@@ -310,10 +303,6 @@ class VariableDeclarationNode extends Node
     else
       type = new AnnotatedType @$first(':root > .typeAnnotation > .type')
       type.toJSON()
-      # return {
-      #   annotationType: 'variableDeclarationType'
-      #   typeName: typeName
-      # }
 
 class ClassNode extends Node
 
