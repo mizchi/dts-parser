@@ -188,7 +188,11 @@ npm install -g
 - `-j, --json`: output as json
 - `-c`: output with no-color
 
-## Handle as node
+## Use as node module
+
+```
+$ npm install dts-parser
+```
 
 ```coffee
 parser = require 'dts-parser'
