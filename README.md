@@ -1,5 +1,7 @@
 # dts-parser
 
+[![Build Status](https://drone.io/github.com/mizchi/dts-parser/status.png)](https://drone.io/github.com/mizchi/dts-parser/latest)
+
 TypeScript d.ts parser.
 
 It generates AST like JSON.
