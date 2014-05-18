@@ -1,4 +1,5 @@
 fs = require 'fs'
+path = require 'path'
 pj = require 'prettyjson'
 p = (obj) -> console.log pj.render obj, noColor: true
 
@@ -8,6 +9,9 @@ Parser = require './parser'
 argv = require('optimist')
   .boolean('nc')
   .alias('c', 'nc')
+  .alias('o', 'out')
+  .alias('w', 'write')
+  .boolean('write')
   .boolean('json')
   .alias('j', 'json')
   .argv
@@ -23,5 +27,11 @@ exports.show = ->
   parser = new Parser
   ast = parser.parse(source)
   top = new TopModule ast._sourceUnit
-  reports = top.toJSON()
-  output reports
+
+  if argv.write
+    outpath = (path.join (argv.out ? ''), path.basename(argv._[0]))+'.json'
+    fs.writeFileSync outpath, JSON.stringify(top.toJSON())
+    console.log argv._[0], '->',outpath
+  else
+    reports = top.toJSON()
+    output reports

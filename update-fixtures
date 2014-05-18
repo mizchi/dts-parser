@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+Dir::glob('test/fixtures/*').each {|fpath|
+  puts `./bin/dts-parser -w -o test/parsed #{fpath}`
+}

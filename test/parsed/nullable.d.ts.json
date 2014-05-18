@@ -1,0 +1,1 @@
+{"moduleName":"Top","modules":[],"classes":[],"properties":[{"typeAnnotation":{"annotationType":"functionType","returnType":{"typeName":"Void","typeArguments":[],"isArray":false},"arguments":[{"identifierName":"a","typeAnnotation":{"typeName":"Any","typeArguments":[],"isArray":false},"nullable":true,"spriced":false}]},"typeParameters":null}],"interfaces":[]}

@@ -11,11 +11,17 @@
     "typescript": "^1.0.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/.bin/mocha --require intelli-espower-loader --compilers coffee:coffee-script/register --reporter spec"
   },
   "bin": {
     "dts-parser": "./bin/dts-parser"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^1.19.0"
+  },
+  "directories": {
+    "test": "test/"
+  }
 }
