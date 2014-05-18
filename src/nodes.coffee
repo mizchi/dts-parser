@@ -71,7 +71,21 @@ class AnnotatedType extends Node
         items ?= []
 
     items.map (i) ->
-      typeArgumentName: i._fullText
+      if i.name?
+        elements =
+          if i.typeArgumentList.typeArguments.item
+            [i.typeArgumentList.typeArguments.item]
+          else if i.typeArgumentList.typeArguments
+            i.typeArgumentList.typeArguments.elements
+          else
+            []
+        annotatedTypes = mapClass AnnotatedType, elements
+        {
+          typeName: i.name._fullText
+          typeArguments: listToJSON annotatedTypes
+        }
+      else
+        typeArgumentName: i._fullText
 
   toJSON: ->
     {
