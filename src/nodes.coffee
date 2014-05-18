@@ -271,6 +271,8 @@ class FunctionArgument extends Node
 
   nullable: -> !!@ast.questionToken
 
+  spriced: -> !!@ast.dotDotDotToken
+
   typeAnnotation: ->
     type = new AnnotatedType @$first(':root > .typeAnnotation > .type')
     type.toJSON()
@@ -279,6 +281,7 @@ class FunctionArgument extends Node
     identifierName: @identifierName()
     typeAnnotation: @typeAnnotation()
     nullable: @nullable()
+    spriced: @spriced()
 
 class VariableNode extends Node
   constructor: (@ast) ->
@@ -547,4 +550,4 @@ exports.Module = Module = class Module extends Node
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
   constructor: (@ast) ->
-    # p @ast
+    p @ast
