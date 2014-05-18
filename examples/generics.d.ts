@@ -3,5 +3,6 @@
 //class Cls<T, U> {}
 
 interface Id {
-  id<T>(t: T): T;
+  id<T>(t: Array<Array<T>>): number;
+  //idx(t: number): Array;
 }

@@ -11,10 +11,12 @@ TypeScript d.ts parser(wip)
 - [ ] implement
 - [x] variable declaration
 - [x] string/number/boolean/any/lambda
-- [ ] nullable
+- [ ] nullable?
 - [x] function
 - [x] interface
-- [ ] generics
+- [x] generics declaration in class, interface, function
+- [ ] generics application
+- [ ] List like T[]
 
 ## Examples
 
