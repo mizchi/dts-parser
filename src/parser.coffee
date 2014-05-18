@@ -8,9 +8,13 @@ module.exports = class DTSParser
       'typeKind'
     ].forEach (name) ->
       $(":has(.#{name})", ast).forEach (item) ->
-        item[name] = item[name]?.replace(/\s/g, '')
+        text = item[name]?.replace? /\s/g, ''
+        item[name] = text
 
   parse: (source) ->
+    source = source.replace /\/\*([\s\S]*?)\*\//g, ''
+    source = source.replace /\/\/.*\n/g, ''
+
     ast = TypeScript.Parser.parse(
       'dummy.ts',
       TypeScript.SimpleText.fromString(source),

@@ -1,6 +1,6 @@
 $ = require('jsonselect').match
 pj = require 'prettyjson'
-p = (obj) -> console.log pj.render obj, noColor: false
+p = (obj) -> console.log pj.render obj, noColor: true
 TypeScript = require './typescript'
 
 mapClass = (Class, arr) -> arr.map (i) -> new Class(i)
