@@ -1,4 +1,4 @@
-$ = require('jsonselect').match
+$ = require('JSONSelect').match
 TypeScript = require './typescript'
 
 module.exports = class DTSParser

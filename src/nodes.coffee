@@ -1,4 +1,4 @@
-$ = require('jsonselect').match
+$ = require('JSONSelect').match
 pj = require 'prettyjson'
 p = (obj) -> console.log pj.render obj, noColor: true
 TypeScript = require './typescript'

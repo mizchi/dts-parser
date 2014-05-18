@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "JSONSelect": "^0.4.0",
+    "JSONSelect": "0.4.0",
     "coffee-script": "^1.7.1",
     "optimist": "^0.6.1",
     "prettyjson": "^1.0.0",
