@@ -46,18 +46,43 @@ exports.Node = Node = class Node
 
   toJSON: -> throw 'Not implemented'
 
+walkSymbol = (root)->
+  if root.dotToken
+    (new MemberAccess root).toJSON()
+  else
+    return root._fullText if root._fullText?
+    tokenKindToTypeName (root.tokenKind ? root.name.tokenKind)
+
+class MemberAccess extends Node
+  """
+  A.B.Point
+
+  left:
+    left:
+      _fullText: A
+    dotToken: ...
+    right:
+      _fullText: B
+  dotToken: ...
+  right:
+    _fullText: Point
+  """
+  constructor: (@ast) ->
+  toJSON: ->
+    left = walkSymbol @ast.left
+    right = walkSymbol @ast.right
+    { left, right, nodeType: 'MemberAccess' }
+
 class AnnotatedType extends Node
   '''
   TemplateApplication
 
     name:
       _fullText: Array
-      tokenKind: 11
     typeArgumentList:
       typeArguments:
         item:
           _fullText: T
-          tokenKind: 11
 
   simple
     _fullText: Array
@@ -65,6 +90,8 @@ class AnnotatedType extends Node
   '''
 
   typeName: ->
+    return walkSymbol @ast.type.name if @ast.type?.name?
+
     fullText = @$first(':root ._fullText') ? @$first(':root > .name > ._fullText')
     return fullText if fullText?
     tokenKindToTypeName (@$first(':root > .tokenKind') ? @$first(':root .name > .tokenKind'))
@@ -93,14 +120,15 @@ class AnnotatedType extends Node
             []
         annotatedTypes = mapClass AnnotatedType, elements
         {
-          typeName: i.name._fullText
+          typeName: walkSymbol(i.name)
           typeArguments: listToJSON annotatedTypes
         }
       else
-        typeArgumentName: i._fullText
+        typeArgumentName: walkSymbol i
 
   toJSON: ->
     {
+      nodeType: @constructor.name
       typeName: @typeName()
       typeArguments: @typeArguments()
       isArray: @isArray()
@@ -112,7 +140,6 @@ class TypeParameter extends Node
       item:
         identifier:
           _fullText: T
-          tokenKind: 11
         constraint: null
   '''
   constructor: (@ast) ->
@@ -127,7 +154,8 @@ class TypeParameter extends Node
         items ?= []
     items.map (i) ->
       {
-        typeParameterName: i.identifier._fullText
+        nodeType: @constructor.name
+        typeParameterName: walkSymbol(i.identifier)
         constraint: i.constraint
       }
 
@@ -160,14 +188,15 @@ class FunctionNode extends Node
   constructor: (@ast) ->
 
   propertyName: ->
-    @$first(':root > .propertyName > ._fullText')
+    return walkSymbol @ast.propertyName if @ast.propertyName?
+    return walkSymbol @ast.identifier if @ast.identifier?
 
   typeAnnotation: ->
     args =  @_arguments()
     functionArgs = mapClass FunctionArgument, args
     returnType = new AnnotatedType @$first(':root > .callSignature > .typeAnnotation > .type')
     {
-      annotationType: 'functionType'
+      nodeType: 'Function'
       returnType: returnType.toJSON()
       arguments: listToJSON functionArgs
     }
@@ -242,6 +271,7 @@ class LambdaFunctionAnnotation extends Node
     returnTypeAnnotation.toJSON()
 
   toJSON: ->
+    nodeType: @constructor.name
     annotationType: 'lambdaFunctionType'
     typeAnnotation: @typeAnnotation()
     arguments: @_arguments()
@@ -267,7 +297,7 @@ class FunctionArgument extends Node
 
   constructor: (@ast) ->
 
-  identifierName: -> @$first(':root > .identifier > ._fullText')
+  identifierName: -> walkSymbol @ast.identifier
 
   nullable: -> !!@ast.questionToken
 
@@ -278,6 +308,7 @@ class FunctionArgument extends Node
     type.toJSON()
 
   toJSON: ->
+    nodeType: @constructor.name
     identifierName: @identifierName()
     typeAnnotation: @typeAnnotation()
     nullable: @nullable()
@@ -286,7 +317,8 @@ class FunctionArgument extends Node
 class VariableNode extends Node
   constructor: (@ast) ->
 
-  propertyName: -> @$first(':root > .variableDeclarator > .propertyName > ._fullText')
+  propertyName: ->
+    walkSymbol(@ast.variableDeclarator.propertyName)
 
   typeAnnotation: ->
     # TODO: refactor
@@ -299,13 +331,15 @@ class VariableNode extends Node
       return type.toJSON()
 
   toJSON: ->
+    nodeType: @constructor.name
     propertyName: @propertyName()
     typeAnnotation: @typeAnnotation()
 
 class VariableDeclarationNode extends Node
   toJSON: ->
     {
-      propertyName: @$first(':root > .propertyName > ._fullText')
+      nodeType: @constructor.name
+      propertyName: walkSymbol @ast.propertyName
       typeAnnotation: @typeAnnotation()
     }
 
@@ -344,14 +378,13 @@ class HeritageList extends Node
   '''
   root: 'heritageClauses'
   constructor: (@ast) ->
-    # p @ast
   toJSON: ->
     items = itemOrNodeOrTokens @ast
     implementList = null
     extend = null
 
     items.forEach (item) =>
-      heritageType = item.extendsOrImplementsKeyword._fullText
+      heritageType = walkSymbol item.extendsOrImplementsKeyword
       types = itemOrElements(item.typeNames)
         .filter (i) -> i._fullText isnt ','
         .map (i) -> new AnnotatedType(i)
@@ -383,10 +416,11 @@ class ClassNode extends Node
     if item.length > 0 then item
     else @$first(":root > .classElements > .nodeOrTokens") or []
 
-  className: -> @$(':root > .identifier > ._fullText')?[0]
+  className: -> walkSymbol @ast.identifier
 
   toJSON: ->
     {
+      nodeType: @constructor.name
       className: @className()
       properties: listToJSON @getProperties()
       typeParameters: if @ast.typeParameterList? then new TypeParameter(@ast.typeParameterList).toJSON() else null
@@ -463,7 +497,7 @@ class InterfaceNode extends Node
 
   constructor: (@ast) ->
 
-  interfaceName: -> @$first(':root > .identifier > ._fullText')
+  interfaceName: -> walkSymbol @ast.identifier
 
   properties: ->
     typeMembers = @$first(':root > .body > .typeMembers')
@@ -482,6 +516,7 @@ class InterfaceNode extends Node
 
   toJSON: ->
     {
+      nodeType: @constructor.name
       interfaceName: @interfaceName()
       properties: listToJSON @properties()
       typeParameters: if @ast.typeParameterList? then new TypeParameter(@ast.typeParameterList).toJSON() else null
@@ -492,7 +527,9 @@ exports.Module = Module = class Module extends Node
 
   constructor: (@ast) ->
 
-  moduleName: -> @$first(':root > .item > .name > ._fullText') or @$first(':root .name > ._fullText')
+  moduleName: ->
+    return walkSymbol(@ast.item.name) if @ast.item?.name?
+    return walkSymbol(@ast.name) if @ast.name?
 
   modules: ->
     item = @$(":root > .moduleElements > .item")
@@ -541,6 +578,7 @@ exports.Module = Module = class Module extends Node
     [].concat(@getFunctions(), @getVariables())
 
   toJSON: ->
+    nodeType: @constructor.name
     moduleName: @moduleName()
     modules   : listToJSON @getModules()
     classes   : listToJSON @getClasses()
@@ -550,4 +588,3 @@ exports.Module = Module = class Module extends Node
 exports.TopModule = TopModule = class TopModule extends Module
   moduleName: -> 'Top'
   constructor: (@ast) ->
-    # p @ast

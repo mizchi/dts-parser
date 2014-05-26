@@ -8,6 +8,7 @@ Parser = require './parser'
 
 argv = require('optimist')
   .boolean('nc')
+  .boolean('tsast')
   .alias('c', 'nc')
   .alias('o', 'out')
   .alias('w', 'write')
@@ -26,6 +27,11 @@ exports.show = ->
   source = fs.readFileSync(argv._[0]).toString()
   parser = new Parser
   ast = parser.parse(source)
+
+  if argv.tsast
+    output ast
+    return
+
   top = new TopModule ast._sourceUnit
 
   if argv.write

@@ -1,1 +1,1 @@
-{"moduleName":"Top","modules":[],"classes":[],"properties":[{"propertyName":"a","typeAnnotation":{"typeName":"Object","typeArguments":[],"isArray":true}}],"interfaces":[]}
+{"nodeType":"TopModule","moduleName":"Top","modules":[],"classes":[],"properties":[{"nodeType":"VariableDeclarationNode","propertyName":"a","typeAnnotation":{"nodeType":"AnnotatedType","typeName":"Object","typeArguments":[],"isArray":true}}],"interfaces":[]}
