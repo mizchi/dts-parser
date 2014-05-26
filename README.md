@@ -63,120 +63,148 @@ export interface IFoo2 extends IFOO {
 ```
 $ npm install -g
 $ dts-parser examples/dummy.d.ts
+nodeType:   TopModule
 moduleName: Top
-modules:
-  -
+modules: 
+  - 
+    nodeType:   Module
     moduleName: Foo
-    modules:
+    modules: 
       (empty array)
-    classes:
-      -
+    classes: 
+      - 
+        nodeType:       ClassNode
         className:      Bar
-        properties:
-          -
+        properties: 
+          - 
+            nodeType:       VariableNode
             propertyName:   x
-            typeAnnotation:
+            typeAnnotation: 
+              nodeType:      AnnotatedType
               typeName:      Any
-              typeArguments:
+              typeArguments: 
                 (empty array)
               isArray:       false
         typeParameters: null
-        heritages:
+        heritages: 
           implementList: null
           extend:        null
-    properties:
-      -
-        typeAnnotation:
-          annotationType: functionType
-          returnType:
+    properties: 
+      - 
+        propertyName:   fun
+        typeAnnotation: 
+          nodeType:   Function
+          returnType: 
+            nodeType:      AnnotatedType
             typeName:      Void
-            typeArguments:
+            typeArguments: 
               (empty array)
             isArray:       false
-          arguments:
-            -
+          arguments: 
+            - 
+              nodeType:       FunctionArgument
               identifierName: str
-              typeAnnotation:
-                typeArguments:
+              typeAnnotation: 
+                nodeType:      AnnotatedType
+                typeArguments: 
                   (empty array)
                 isArray:       true
               nullable:       true
+              spriced:        false
         typeParameters: null
-      -
+      - 
+        nodeType:       VariableDeclarationNode
         propertyName:   a
-        typeAnnotation:
+        typeAnnotation: 
+          nodeType:      AnnotatedType
           typeName:      Number
-          typeArguments:
+          typeArguments: 
             (empty array)
           isArray:       false
-    interfaces:
+    interfaces: 
       (empty array)
-classes:
-  -
+classes: 
+  - 
+    nodeType:       ClassNode
     className:      X
-    properties:
+    properties: 
       (empty array)
     typeParameters: null
-    heritages:
+    heritages: 
       implementList: null
       extend:        null
-properties:
-  -
+properties: 
+  - 
+    nodeType:       VariableDeclarationNode
     propertyName:   x
-    typeAnnotation:
+    typeAnnotation: 
+      nodeType:      AnnotatedType
       typeName:      Any
-      typeArguments:
+      typeArguments: 
         (empty array)
       isArray:       false
-interfaces:
-  -
+interfaces: 
+  - 
+    nodeType:       InterfaceNode
     interfaceName:  IFoo
-    properties:
-      -
+    properties: 
+      - 
+        nodeType:       VariableDeclarationNode
         propertyName:   s
-        typeAnnotation:
+        typeAnnotation: 
+          nodeType:      AnnotatedType
           typeName:      String
-          typeArguments:
+          typeArguments: 
             (empty array)
           isArray:       false
-      -
+      - 
+        nodeType:       VariableDeclarationNode
         propertyName:   f
-        typeAnnotation:
+        typeAnnotation: 
+          nodeType:       LambdaFunctionAnnotation
           annotationType: lambdaFunctionType
-          typeAnnotation:
+          typeAnnotation: 
+            nodeType:      AnnotatedType
             typeName:      Object
-            typeArguments:
+            typeArguments: 
               (empty array)
             isArray:       true
-          arguments:
-            -
+          arguments: 
+            - 
+              nodeType:       FunctionArgument
               identifierName: t
-              typeAnnotation:
+              typeAnnotation: 
+                nodeType:      AnnotatedType
                 typeName:      Number
-                typeArguments:
+                typeArguments: 
                   (empty array)
                 isArray:       false
               nullable:       false
+              spriced:        false
     typeParameters: null
-    heritages:
+    heritages: 
       implementList: null
       extend:        null
-  -
+  - 
+    nodeType:       InterfaceNode
     interfaceName:  IFoo2
-    properties:
-      -
+    properties: 
+      - 
+        nodeType:       VariableDeclarationNode
         propertyName:   n
-        typeAnnotation:
+        typeAnnotation: 
+          nodeType:      AnnotatedType
           typeName:      Number
-          typeArguments:
+          typeArguments: 
             (empty array)
           isArray:       false
     typeParameters: null
-    heritages:
+    heritages: 
       implementList: null
-      extend:
+      extend: 
+        nodeType:      AnnotatedType
         typeName:      IFOO
-        typeArguments:
+        typeArguments: 
           (empty array)
         isArray:       false
 ```
